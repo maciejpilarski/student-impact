@@ -4,7 +4,7 @@ Tags: education, students, showcase, airtable, wordpress-org
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,10 @@ Card labels:
 * Team chip: the student's main contribution area (also the filter groups).
 
 == Changelog ==
+
+= 1.7.1 =
+* The graduate cards are centered: photo, name, figures and chips. The rank sits
+  in the card's top corner.
 
 = 1.7.0 =
 * Hours are gone: not read from Airtable, not part of the ranking (now impact
