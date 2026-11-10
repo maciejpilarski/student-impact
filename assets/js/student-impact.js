@@ -1,13 +1,34 @@
 /**
- * Student Impact - contribution-area filtering.
+ * Student Impact - contribution-area filtering, and the short list on a phone.
  * Vanilla JS, no dependencies. Scoped per showcase instance so multiple
- * showcases on one page filter independently.
+ * showcases on one page work independently.
+ *
+ * The short list: this script marks a long showcase `si--collapsed`, and the stylesheet then shows
+ * the first 12 cards on a narrow screen with a button for the rest. Without this script every card
+ * shows, so nothing is ever out of reach.
  */
 ( function () {
 	'use strict';
 
 	function initShowcase( section ) {
 		var filterBar = section.querySelector( '.si__filters' );
+		var more = section.querySelector( '.si__more-btn' );
+
+		function expand() {
+			section.classList.remove( 'si--collapsed' );
+		}
+
+		if ( more ) {
+			section.classList.add( 'si--collapsed' );
+			more.addEventListener( 'click', function () {
+				var next = section.querySelector( '.si-card:nth-child(13) a' );
+				expand();
+				if ( next ) {
+					next.focus();
+				}
+			} );
+		}
+
 		if ( ! filterBar ) {
 			return;
 		}
@@ -18,6 +39,11 @@
 
 		function apply( filter ) {
 			var visible = 0;
+
+			// A team's graduates may all sit past the short list, so a filter shows the whole list.
+			if ( '*' !== filter ) {
+				expand();
+			}
 
 			cards.forEach( function ( card ) {
 				var team = card.getAttribute( 'data-si-team' ) || '';
@@ -49,8 +75,10 @@
 	}
 
 	function init() {
-		var showcases = document.querySelectorAll( '.si--has-filters' );
-		Array.prototype.forEach.call( showcases, initShowcase );
+		var showcases = document.querySelectorAll( '.si__grid' );
+		Array.prototype.forEach.call( showcases, function ( grid ) {
+			initShowcase( grid.closest( '.si' ) );
+		} );
 	}
 
 	if ( 'loading' === document.readyState ) {

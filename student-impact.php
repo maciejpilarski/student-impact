@@ -3,7 +3,7 @@
  * Plugin Name:       Student Impact
  * Plugin URI:        https://wordpresseducation.org/
  * Description:       Showcases the graduates of the WordPress Credits program, ranked by their recent impact and contributions on WordPress.org. Data is synced from Airtable and profiles.wordpress.org; program figures come from WPCredits-Tracker when it runs on the same site. Provides "Student Stories" (showcase) and "Graduate Stats" (totals) blocks with matching shortcodes.
- * Version:           1.7.2
+ * Version:           1.7.3
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Maciej (Matt) Pilarski
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SI_VERSION', '1.7.2' );
+define( 'SI_VERSION', '1.7.3' );
 define( 'SI_FILE', __FILE__ );
 define( 'SI_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SI_URL', plugin_dir_url( __FILE__ ) );
@@ -127,8 +127,7 @@ function si_register_styles() {
 }
 
 /**
- * Activation: seed showcase data (so the page works before the first live sync)
- * and schedule the daily sync.
+ * Activation: seed the anonymous totals and schedule the daily sync.
  */
 function si_activate() {
 	// Ensure default settings exist.
@@ -136,18 +135,8 @@ function si_activate() {
 		update_option( SI_OPT_SETTINGS, si_default_settings() );
 	}
 
-	// Seed the showcase from the bundled snapshot if we have no data yet.
-	$existing = get_option( SI_OPT_DATA, false );
-	if ( empty( $existing ) || ! is_array( $existing ) ) {
-		$seed_file = SI_DIR . 'data/seed.json';
-		if ( is_readable( $seed_file ) ) {
-			$seed = json_decode( file_get_contents( $seed_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			if ( is_array( $seed ) ) {
-				update_option( SI_OPT_DATA, $seed );
-				update_option( SI_OPT_LASTSYNC, 0 ); // 0 = seed snapshot, never live-synced.
-			}
-		}
-	}
+	// The showcase ships no snapshot: it names people, so it starts empty and the first sync
+	// fills it. Only the anonymous totals below are seeded.
 
 	// Seed the aggregate totals from the bundled snapshot if we have none yet.
 	$existing_totals = get_option( SI_OPT_TOTALS, false );

@@ -376,6 +376,60 @@
 	border-color: var( --si-line );
 }
 
+/* On a phone: the first 12 cards and a button for the rest (the script sets si--collapsed, so
+   without it every card shows), smaller cards, and tiles that put the figure beside its label. */
+.si .si__more {
+	display: none;
+	margin: 16px 0 0;
+}
+
+.si .si__more-btn {
+	justify-content: center;
+	width: 100%;
+}
+
+@media ( max-width: 600px ) {
+	.si.si--collapsed .si-card:nth-child( n + 13 ) {
+		display: none;
+	}
+
+	.si.si--collapsed .si__more {
+		display: block;
+	}
+
+	.si .si-filter {
+		padding: 8px 10px;
+	}
+
+	.si .si-card {
+		gap: 12px;
+		padding: 16px;
+	}
+
+	.si .si-card__avatar {
+		flex-basis: 48px;
+		height: 48px;
+		width: 48px;
+	}
+
+	.si .si-card__who {
+		gap: 8px;
+	}
+
+	.si-card__rank {
+		right: 16px;
+		top: 16px;
+	}
+
+	.si .si-card__stats {
+		padding-top: 12px;
+	}
+
+	.si .si-stat dd {
+		font-size: 28px;
+	}
+}
+
 /* The legend under the cards: each term drawn as a card draws it, then what it means. */
 .si .si-legend {
 	border-top: 1px solid var( --si-line );
@@ -550,5 +604,26 @@
 	.si-stats.si-stats--inline .si-bigstat + .si-bigstat {
 		border-left: 0;
 		padding-left: 0;
+	}
+}
+
+/* On a phone a tile puts its figure beside its label. After the tiles' own rules, which it changes;
+   the inline strip keeps its own layout. */
+@media ( max-width: 600px ) {
+	.si-stats--grid .si-bigstat {
+		align-items: center;
+		flex-direction: row-reverse;
+		gap: 16px;
+		justify-content: flex-end;
+		padding: 16px;
+	}
+
+	.si-stats--grid .si-bigstat__value {
+		flex: 0 0 96px;
+		font-size: 36px;
+	}
+
+	.si-stats--grid .si-bigstat__label {
+		margin: 0;
 	}
 }

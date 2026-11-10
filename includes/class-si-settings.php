@@ -171,7 +171,7 @@ class SI_Settings {
 						echo esc_html( sprintf( /* translators: %s: human time diff. */ __( '%s ago', 'student-impact' ), human_time_diff( $last_sync ) ) );
 						echo ' (' . esc_html( wp_date( 'Y-m-d H:i', $last_sync ) ) . ')';
 					} else {
-						esc_html_e( 'Never (showing bundled snapshot)', 'student-impact' );
+						esc_html_e( 'Never', 'student-impact' );
 					}
 					?>
 				</p>
@@ -270,7 +270,7 @@ class SI_Settings {
 					<li><?php esc_html_e( '“N high-impact” - high-impact contributions in the last 12 months.', 'student-impact' ); ?></li>
 					<li><?php esc_html_e( 'Team badge - the student’s main contribution area (also the filter groups).', 'student-impact' ); ?></li>
 				</ul>
-				<p class="description"><?php esc_html_e( 'Data syncs from Airtable and WordPress.org (daily, plus the “Sync now” button above). A bundled snapshot is shown until the first sync runs. When WPCredits-Tracker runs on this site, Graduate Stats takes the program figures (graduates to date, first contributions, teams, plans to keep contributing) from it.', 'student-impact' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Data syncs from Airtable and WordPress.org (daily, plus the “Sync now” button above). The showcase is empty until the first sync runs. When WPCredits-Tracker runs on this site, Graduate Stats takes the program figures (graduates to date, first contributions, teams, plans to keep contributing) from it.', 'student-impact' ); ?></p>
 			</details>
 		</div>
 

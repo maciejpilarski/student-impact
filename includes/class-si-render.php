@@ -266,7 +266,11 @@ class SI_Render {
 		$teams = self::team_counts( $students );
 		$show_filters = ! empty( $args['filters'] ) && count( $teams ) > 1;
 
-		if ( $show_filters && wp_script_is( 'student-impact', 'registered' ) ) {
+		// The first cards a phone shows before "Show all"; a shorter list needs no button.
+		$short     = 12;
+		$show_more = count( $students ) > $short;
+
+		if ( ( $show_filters || $show_more ) && wp_script_is( 'student-impact', 'registered' ) ) {
 			wp_enqueue_script( 'student-impact' );
 		}
 
@@ -309,6 +313,17 @@ class SI_Render {
 				<p class="si__empty-filter" hidden><?php esc_html_e( 'No students in this area.', 'student-impact' ); ?></p>
 			<?php endif; ?>
 
+			<?php if ( $show_more ) : ?>
+				<p class="si__more">
+					<button type="button" class="si-filter si__more-btn">
+						<?php
+						/* translators: %s: how many graduates the showcase lists. */
+						echo esc_html( sprintf( __( 'Show all %s graduates', 'student-impact' ), number_format_i18n( count( $students ) ) ) );
+						?>
+					</button>
+				</p>
+			<?php endif; ?>
+
 			<?php
 			if ( ! empty( $args['legend'] ) ) {
 				echo self::legend(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -337,9 +352,8 @@ class SI_Render {
 				'text' => __( 'How many contributions WordPress.org recorded for the graduate in the last 12 months, of any kind.', 'student-impact' ),
 			),
 			array(
-				/* translators: %s: number of high-impact contributions. */
-				'term' => '<span class="si-badge si-badge--high">' . esc_html( sprintf( _n( '%s high-impact', '%s high-impact', 8, 'student-impact' ), number_format_i18n( 8 ) ) ) . '</span>',
-				'text' => __( 'How many of those contributions WordPress.org counts as high-impact, such as commits, releases, approved translations and props.', 'student-impact' ),
+				'term' => '<span class="si-legend__rank">#1</span>',
+				'text' => __( 'The graduate\'s place in the list. Impact and contributions count half each; the first three sit on a tinted card.', 'student-impact' ),
 			),
 			array(
 				'term' => '<span class="si-badge si-badge--active">' . esc_html__( 'Active now', 'student-impact' ) . '</span>',
@@ -350,8 +364,9 @@ class SI_Render {
 				'text' => __( 'The WordPress team the graduate mainly contributes to, Polyglots for example. The buttons above the cards filter by it.', 'student-impact' ),
 			),
 			array(
-				'term' => '<span class="si-legend__rank">#1</span>',
-				'text' => __( 'The graduate\'s place in the list. Impact and contributions count half each; the first three sit on a tinted card.', 'student-impact' ),
+				/* translators: %s: number of high-impact contributions. */
+				'term' => '<span class="si-badge si-badge--high">' . esc_html( sprintf( _n( '%s high-impact', '%s high-impact', 8, 'student-impact' ), number_format_i18n( 8 ) ) ) . '</span>',
+				'text' => __( 'How many of those contributions WordPress.org counts as high-impact, such as commits, releases, approved translations and props.', 'student-impact' ),
 			),
 		);
 

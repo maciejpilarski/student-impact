@@ -4,7 +4,7 @@ Tags: education, students, showcase, airtable, wordpress-org
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,8 +63,8 @@ Go to the **Student Impact** menu in the WP-Admin sidebar:
 * Set how many students to showcase (default 50).
 * Click **Sync now**. A daily background sync also runs.
 
-On activation the plugin seeds a bundled snapshot so the showcase works before
-the first sync completes.
+On activation the plugin seeds anonymous totals only. The showcase names people,
+so it ships no snapshot and stays empty until the first sync.
 
 == How students are selected and ranked ==
 
@@ -85,6 +85,13 @@ Card labels:
 * Team chip: the student's main contribution area (also the filter groups).
 
 == Changelog ==
+
+= 1.7.3 =
+* The plugin no longer ships a snapshot of named graduates (`data/seed.json`):
+  the showcase starts empty and the first sync fills it.
+* On a phone: the first 12 graduates and a "Show all" button, smaller cards and
+  filter buttons, and totals with the figure beside its label.
+* The legend lists the rank before the chips.
 
 = 1.7.2 =
 * A legend under the showcase says what each figure and chip on a card means:
