@@ -339,7 +339,7 @@
 	color: var( --si-brand-dark );
 }
 
-/* Chips */
+/* Chips on a card */
 .si .si-card__badges {
 	display: flex;
 	flex-wrap: wrap;
@@ -348,14 +348,15 @@
 	margin: 0;
 }
 
+/* The site's chip: a 2px corner, as the homepage's chips and tags. */
 .si-badge {
 	border: 1px solid transparent;
-	border-radius: 999px;
+	border-radius: 2px;
 	color: var( --si-ink );
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 1.5;
-	padding: 2px 10px;
+	padding: 1px 8px;
 }
 
 .si-badge--team {
