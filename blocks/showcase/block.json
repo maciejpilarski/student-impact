@@ -5,7 +5,7 @@
 	"title": "Student Stories",
 	"category": "widgets",
 	"icon": "awards",
-	"description": "Showcase the top graduating students ranked by their WordPress.org impact, contributions, and hours.",
+	"description": "Showcase the program's graduates, ranked by their recent impact and contributions on WordPress.org.",
 	"keywords": [ "students", "stories", "showcase", "graduates", "contributors" ],
 	"textdomain": "student-impact",
 	"supports": {
@@ -27,11 +27,11 @@
 		},
 		"title": {
 			"type": "string",
-			"default": "Student Stories"
+			"default": "Student impact"
 		},
 		"subtitle": {
 			"type": "string",
-			"default": "Our top graduating contributors, ranked by real WordPress.org impact."
+			"default": "Graduates of the program, ranked by their recent impact and contributions on WordPress.org."
 		},
 		"showFilters": {
 			"type": "boolean",

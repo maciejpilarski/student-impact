@@ -102,8 +102,7 @@ class SI_Settings {
 		}
 		check_admin_referer( self::NONCE );
 
-		$settings = si_get_settings();
-		if ( empty( $settings['airtable_pat'] ) ) {
+		if ( '' === si_airtable_token() ) {
 			$this->redirect_back( 'notoken' );
 		}
 
@@ -143,7 +142,7 @@ class SI_Settings {
 			<?php if ( 'started' === $flag ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Sync started in the background. This page auto-refreshes while it runs.', 'student-impact' ); ?></p></div>
 			<?php elseif ( 'notoken' === $flag ) : ?>
-				<div class="notice notice-error"><p><?php esc_html_e( 'Add your Airtable Personal Access Token first, then run a sync.', 'student-impact' ); ?></p></div>
+				<div class="notice notice-error"><p><?php esc_html_e( 'Add an Airtable Personal Access Token first, then run a sync.', 'student-impact' ); ?></p></div>
 			<?php endif; ?>
 
 			<?php if ( $last_err ) : ?>
@@ -192,8 +191,9 @@ class SI_Settings {
 						<td>
 							<input type="password" id="si_pat" name="<?php echo esc_attr( SI_OPT_SETTINGS ); ?>[airtable_pat]" value="" class="regular-text" autocomplete="off" placeholder="<?php echo esc_attr( $pat_mask ? $pat_mask : 'pat…' ); ?>" />
 							<p class="description">
-								<?php esc_html_e( 'Stored in the database and used server-side only. Leave blank to keep the current token.', 'student-impact' ); ?>
+								<?php esc_html_e( 'Stored in the database and used server-side only. Leave blank to keep the current token. On a site that runs the WPCredits Program Manager, no token is needed here.', 'student-impact' ); ?>
 								<?php if ( $pat_mask ) : ?><br /><em><?php echo esc_html( sprintf( /* translators: %s: masked token. */ __( 'Current: %s', 'student-impact' ), $pat_mask ) ); ?></em><?php endif; ?>
+								<?php if ( 'manager' === si_airtable_token_source() ) : ?><br /><em><?php esc_html_e( 'None saved here: a sync uses the WPCredits Program Manager\'s token.', 'student-impact' ); ?></em><?php endif; ?>
 								<br /><strong><?php esc_html_e( 'Security:', 'student-impact' ); ?></strong> <?php esc_html_e( 'use a token scoped to read-only access to just this base.', 'student-impact' ); ?>
 							</p>
 						</td>
@@ -227,11 +227,11 @@ class SI_Settings {
 			</form>
 
 			<h2><?php esc_html_e( 'How to display it', 'student-impact' ); ?></h2>
-			<p><strong><?php esc_html_e( 'Student Stories', 'student-impact' ); ?></strong> — <?php esc_html_e( 'the ranked showcase. Insert the "Student Stories" block, or use:', 'student-impact' ); ?></p>
-			<p><code>[student_impact count="50" columns="3" filters="yes" title="Student Stories"]</code></p>
+			<p><strong><?php esc_html_e( 'Student Stories', 'student-impact' ); ?></strong> - <?php esc_html_e( 'the ranked showcase. Insert the "Student Stories" block, or use:', 'student-impact' ); ?></p>
+			<p><code>[student_impact count="50" columns="3" filters="yes" title="Student impact"]</code></p>
 			<p class="description"><?php esc_html_e( 'Visitors can filter the showcase by contribution area (Polyglots, Support, …). Set filters="no" to hide the filter bar.', 'student-impact' ); ?></p>
-			<p style="margin-top:1em;"><strong><?php esc_html_e( 'Graduate Stats', 'student-impact' ); ?></strong> — <?php esc_html_e( 'class-wide totals across all graduates. Insert the "Graduate Stats" block, or use:', 'student-impact' ); ?></p>
-			<p><code>[student_impact_stats title="Class Impact" layout="grid"]</code></p>
+			<p style="margin-top:1em;"><strong><?php esc_html_e( 'Graduate Stats', 'student-impact' ); ?></strong> - <?php esc_html_e( 'totals across all graduates. Insert the "Graduate Stats" block, or use:', 'student-impact' ); ?></p>
+			<p><code>[student_impact_stats title="Graduate impact" layout="grid"]</code></p>
 			<p class="description"><?php esc_html_e( 'Use layout="inline" for a compact horizontal strip suited to headers or footers.', 'student-impact' ); ?></p>
 
 			<h2><?php esc_html_e( 'How students are selected and ranked', 'student-impact' ); ?></h2>
@@ -245,33 +245,32 @@ class SI_Settings {
 					<li><?php esc_html_e( 'They match (by email) a row in the Students Reports table.', 'student-impact' ); ?></li>
 					<li><?php esc_html_e( 'That report has a usable WordPress.org profile (profiles.wordpress.org/user).', 'student-impact' ); ?></li>
 				</ol>
-				<p class="description"><?php esc_html_e( 'Graduates without a WordPress.org profile are excluded from the showcase, but are still counted in the Graduate Stats totals (headcount and hours).', 'student-impact' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Graduates without a WordPress.org profile are left out of the showcase, but are still counted as graduates in the Graduate Stats totals.', 'student-impact' ); ?></p>
 
 				<h3 style="margin-bottom:.3em;"><?php esc_html_e( 'Which data comes from where', 'student-impact' ); ?></h3>
 				<ul style="margin:0 0 .5em 1.5em;list-style:disc;">
-					<li><?php esc_html_e( 'Name, email, Graduate status — Airtable Students table.', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'WordPress profile URL, Hours, contribution Team — Airtable Students Reports (Hours = the highest value across the student’s reports).', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'Recent impact score, Contributions, high-impact count, “active” flag — scraped live from the student’s profiles.wordpress.org “Recent impact” panel (last 12 months). Impact is WordPress’s own weighted score: high-impact work (commits, releases, approved translations, props) counts 3× routine activity.', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'Avatar — Gravatar on the WordPress.org profile.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Name, email, Graduate status - Airtable Students table.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'WordPress profile URL and contribution team: Airtable Students Reports.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Recent impact score, Contributions, high-impact count, “active” flag - scraped live from the student’s profiles.wordpress.org “Recent impact” panel (last 12 months). Impact is WordPress’s own weighted score: high-impact work (commits, releases, approved translations, props) counts 3× routine activity.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Avatar - Gravatar on the WordPress.org profile.', 'student-impact' ); ?></li>
 				</ul>
 
 				<h3 style="margin-bottom:.3em;"><?php esc_html_e( 'How they are ranked', 'student-impact' ); ?></h3>
 				<p><?php esc_html_e( 'A composite score, each signal scaled against the cohort’s top value:', 'student-impact' ); ?></p>
 				<ul style="margin:0 0 .5em 1.5em;list-style:disc;">
-					<li><?php esc_html_e( 'Recent impact — 45%', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'Contributions — 45%', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'Hours — 10% (minor tiebreaker only)', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Recent impact: 50%', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Contributions: 50%', 'student-impact' ); ?></li>
 				</ul>
-				<p class="description"><?php esc_html_e( 'Ties break by impact, then contributions, so hours never decides the top spots. The highest-scoring top N (set above, default 50) are shown, ranked #1 downward.', 'student-impact' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Ties break by impact, then contributions. Hours are not read, ranked or shown. The highest-scoring top N (set above, default 50) are shown, ranked #1 downward.', 'student-impact' ); ?></p>
 
 				<h3 style="margin-bottom:.3em;"><?php esc_html_e( 'Card labels', 'student-impact' ); ?></h3>
 				<ul style="margin:0 0 .5em 1.5em;list-style:disc;">
-					<li><?php esc_html_e( 'Rank badge (#1–#3 use the highlighted “medal” style).', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( '“Active now” — made at least 1 contribution in the last 90 days.', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( '“N high-impact” — high-impact contributions in the last 12 months.', 'student-impact' ); ?></li>
-					<li><?php esc_html_e( 'Team badge — the student’s main contribution area (also the filter groups).', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Rank (#1 to #3 sit on a tinted card).', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( '“Active now” - made at least 1 contribution in the last 90 days.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( '“N high-impact” - high-impact contributions in the last 12 months.', 'student-impact' ); ?></li>
+					<li><?php esc_html_e( 'Team badge - the student’s main contribution area (also the filter groups).', 'student-impact' ); ?></li>
 				</ul>
-				<p class="description"><?php esc_html_e( 'Data syncs live from Airtable + WordPress.org (daily, plus the “Sync now” button above). A bundled snapshot is shown until the first sync runs.', 'student-impact' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Data syncs from Airtable and WordPress.org (daily, plus the “Sync now” button above). A bundled snapshot is shown until the first sync runs. When WPCredits-Tracker runs on this site, Graduate Stats takes the program figures (graduates to date, first contributions, teams, plans to keep contributing) from it.', 'student-impact' ); ?></p>
 			</details>
 		</div>
 

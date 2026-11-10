@@ -22,8 +22,8 @@ class SI_Render {
 			array(
 				'count'    => 0, // 0 = show all synced (up to the synced count).
 				'columns'  => 3,
-				'title'    => __( 'Student Stories', 'student-impact' ),
-				'subtitle' => __( 'Our top graduating contributors, ranked by real WordPress.org impact.', 'student-impact' ),
+				'title'    => __( 'Student impact', 'student-impact' ),
+				'subtitle' => __( 'Graduates of the program, ranked by their recent impact and contributions on WordPress.org.', 'student-impact' ),
 				'filters'  => 'yes',
 			),
 			$atts,
@@ -50,8 +50,8 @@ class SI_Render {
 	public static function stats_shortcode( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'title'    => __( 'Class Impact', 'student-impact' ),
-				'subtitle' => __( 'What our graduates have contributed to WordPress.', 'student-impact' ),
+				'title'    => __( 'Graduate impact', 'student-impact' ),
+				'subtitle' => __( 'What graduates of the program have contributed to WordPress.', 'student-impact' ),
 				'note'     => 'yes',
 				'layout'   => 'grid',
 			),
@@ -84,7 +84,7 @@ class SI_Render {
 		$args = wp_parse_args(
 			$args,
 			array(
-				'title'    => __( 'Class Impact', 'student-impact' ),
+				'title'    => __( 'Graduate impact', 'student-impact' ),
 				'subtitle' => '',
 				'note'     => true,
 				'layout'   => 'grid',
@@ -105,7 +105,6 @@ class SI_Render {
 			array(
 				'students'      => 0,
 				'profiles'      => 0,
-				'hours'         => 0,
 				'contributions' => 0,
 				'impact'        => 0,
 				'high'          => 0,
@@ -113,12 +112,52 @@ class SI_Render {
 			)
 		);
 
+		// The program's own figures come from WPCredits-Tracker when it runs here, so a
+		// page of both plugins shows one number for one thing.
+		$shared    = si_tracker_figures();
+		$graduates = isset( $shared['graduates'] ) ? $shared['graduates'] : (int) $t['students'];
+
 		$tiles = array(
-			array( 'key' => 'students', 'value' => $t['students'], 'label' => __( 'Graduates', 'student-impact' ) ),
-			array( 'key' => 'impact', 'value' => $t['impact'], 'label' => __( 'Total impact', 'student-impact' ) ),
-			array( 'key' => 'contrib', 'value' => $t['contributions'], 'label' => __( 'Contributions', 'student-impact' ) ),
-			array( 'key' => 'hours', 'value' => $t['hours'], 'label' => __( 'Hours contributed', 'student-impact' ) ),
+			array(
+				'key'   => 'students',
+				'value' => number_format_i18n( $graduates ),
+				'label' => __( 'Graduates to date', 'student-impact' ),
+			),
+			array(
+				'key'   => 'contrib',
+				'value' => number_format_i18n( (int) $t['contributions'] ),
+				'label' => __( 'Contributions by graduates in the last 12 months', 'student-impact' ),
+			),
+			array(
+				'key'   => 'impact',
+				'value' => number_format_i18n( (int) $t['impact'] ),
+				'label' => __( 'Recent impact score, as WordPress.org counts it', 'student-impact' ),
+			),
 		);
+		if ( isset( $shared['first_contributions'] ) ) {
+			$tiles[] = array(
+				'key'   => 'first',
+				'value' => number_format_i18n( $shared['first_contributions'] ),
+				'label' => __( 'First contributions made', 'student-impact' ),
+			);
+		}
+		if ( isset( $shared['teams'] ) ) {
+			$tiles[] = array(
+				'key'   => 'teams',
+				'value' => number_format_i18n( $shared['teams'] ),
+				'label' => __( 'WordPress teams contributed to', 'student-impact' ),
+			);
+		}
+		if ( isset( $shared['keep_pct'] ) ) {
+			$tiles[] = array(
+				'key'   => 'keep',
+				/* translators: %s: a percentage figure. */
+				'value' => sprintf( __( '%s%%', 'student-impact' ), number_format_i18n( $shared['keep_pct'] ) ),
+				'label' => __( 'Graduates who plan to keep contributing to WordPress', 'student-impact' ),
+			);
+		}
+
+		$stamp = (int) get_option( SI_OPT_LASTSYNC, 0 );
 
 		ob_start();
 		?>
@@ -137,8 +176,8 @@ class SI_Render {
 			<dl class="si-stats__grid">
 				<?php foreach ( $tiles as $tile ) : ?>
 					<div class="si-bigstat si-bigstat--<?php echo esc_attr( $tile['key'] ); ?>">
-						<dd class="si-bigstat__value"><?php echo esc_html( number_format_i18n( (int) $tile['value'] ) ); ?></dd>
 						<dt class="si-bigstat__label"><?php echo esc_html( $tile['label'] ); ?></dt>
+						<dd class="si-bigstat__value"><?php echo esc_html( $tile['value'] ); ?></dd>
 					</div>
 				<?php endforeach; ?>
 			</dl>
@@ -147,12 +186,19 @@ class SI_Render {
 				<p class="si-stats__note">
 					<?php
 					printf(
-						/* translators: 1: total graduates, 2: graduates with a WordPress.org profile. */
-						esc_html__( 'Across %1$s graduates (%2$s with a WordPress.org profile). %3$s of them are still actively contributing.', 'student-impact' ),
-						esc_html( number_format_i18n( (int) $t['students'] ) ),
+						/* translators: 1: graduates with a WordPress.org profile, 2: graduates who contributed in the last 90 days. */
+						esc_html__( 'Contributions and impact are read from the WordPress.org profiles of %1$s graduates. %2$s of them contributed in the last 90 days.', 'student-impact' ),
 						esc_html( number_format_i18n( (int) $t['profiles'] ) ),
 						esc_html( number_format_i18n( (int) $t['active'] ) )
 					);
+					if ( $stamp > 0 ) {
+						echo ' ';
+						printf(
+							/* translators: %s: the date of the last successful sync. */
+							esc_html__( 'Last updated on %s.', 'student-impact' ),
+							'<time datetime="' . esc_attr( wp_date( 'Y-m-d', $stamp ) ) . '">' . esc_html( wp_date( (string) get_option( 'date_format', 'F j, Y' ), $stamp ) ) . '</time>'
+						);
+					}
 					?>
 				</p>
 			<?php endif; ?>
@@ -191,7 +237,7 @@ class SI_Render {
 			array(
 				'count'    => 0,
 				'columns'  => 3,
-				'title'    => __( 'Student Stories', 'student-impact' ),
+				'title'    => __( 'Student impact', 'student-impact' ),
 				'subtitle' => '',
 				'filters'  => true,
 			)
@@ -311,45 +357,42 @@ class SI_Render {
 				'contributions' => 0,
 				'high'          => 0,
 				'recent90'      => 0,
-				'hours'         => 0,
 			)
 		);
 
-		$rank    = (int) $s['rank'];
+		$rank      = (int) $s['rank'];
 		$is_active = (int) $s['recent90'] > 0;
-		$medal   = $rank <= 3 ? ' si-card--medal' : '';
-		$team    = isset( $s['team'] ) ? trim( (string) $s['team'] ) : '';
+		$top       = ( $rank >= 1 && $rank <= 3 ) ? ' si-card--top' : '';
+		$team      = trim( (string) $s['team'] );
 
 		ob_start();
 		?>
-		<li class="si-card<?php echo esc_attr( $medal ); ?>" data-si-team="<?php echo esc_attr( $team ); ?>">
-			<div class="si-card__top">
-				<?php if ( $rank ) : ?>
-					<span class="si-card__rank" aria-label="<?php echo esc_attr( sprintf( /* translators: %d: rank. */ __( 'Rank %d', 'student-impact' ), $rank ) ); ?>">#<?php echo (int) $rank; ?></span>
-				<?php endif; ?>
+		<li class="si-card<?php echo esc_attr( $top ); ?>" data-si-team="<?php echo esc_attr( $team ); ?>">
+			<div class="si-card__who">
 				<?php if ( $s['avatar'] ) : ?>
-					<img class="si-card__avatar" src="<?php echo esc_url( $s['avatar'] ); ?>" alt="" loading="lazy" width="116" height="116" />
+					<img class="si-card__avatar" src="<?php echo esc_url( $s['avatar'] ); ?>" alt="" loading="lazy" width="64" height="64" />
 				<?php else : ?>
 					<span class="si-card__avatar si-card__avatar--ph" aria-hidden="true"><?php echo esc_html( self::initials( $s['name'] ) ); ?></span>
 				<?php endif; ?>
+				<div class="si-card__id">
+					<h3 class="si-card__name">
+						<?php if ( $s['url'] ) : ?>
+							<a href="<?php echo esc_url( $s['url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $s['name'] ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $s['name'] ); ?>
+						<?php endif; ?>
+					</h3>
+					<?php if ( $s['username'] ) : ?>
+						<p class="si-card__handle">@<?php echo esc_html( $s['username'] ); ?></p>
+					<?php endif; ?>
+				</div>
+				<?php if ( $rank ) : ?>
+					<span class="si-card__rank">
+						<span class="screen-reader-text"><?php esc_html_e( 'Rank', 'student-impact' ); ?></span>
+						#<?php echo (int) $rank; ?>
+					</span>
+				<?php endif; ?>
 			</div>
-
-			<h3 class="si-card__name">
-				<?php if ( $s['url'] ) : ?>
-					<a href="<?php echo esc_url( $s['url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $s['name'] ); ?></a>
-				<?php else : ?>
-					<?php echo esc_html( $s['name'] ); ?>
-				<?php endif; ?>
-			</h3>
-
-			<p class="si-card__meta">
-				<?php if ( $s['username'] ) : ?>
-					<span class="si-card__handle">@<?php echo esc_html( $s['username'] ); ?></span>
-				<?php endif; ?>
-				<?php if ( $s['team'] ) : ?>
-					<span class="si-card__team"><?php echo esc_html( $s['team'] ); ?></span>
-				<?php endif; ?>
-			</p>
 
 			<dl class="si-card__stats">
 				<div class="si-stat si-stat--impact">
@@ -360,14 +403,13 @@ class SI_Render {
 					<dt><?php esc_html_e( 'Contributions', 'student-impact' ); ?></dt>
 					<dd><?php echo esc_html( number_format_i18n( $s['contributions'] ) ); ?></dd>
 				</div>
-				<div class="si-stat si-stat--hours">
-					<dt><?php esc_html_e( 'Hours', 'student-impact' ); ?></dt>
-					<dd><?php echo esc_html( number_format_i18n( $s['hours'] ) ); ?></dd>
-				</div>
 			</dl>
 
-			<?php if ( $is_active || (int) $s['high'] > 0 ) : ?>
+			<?php if ( '' !== $team || $is_active || (int) $s['high'] > 0 ) : ?>
 				<p class="si-card__badges">
+					<?php if ( '' !== $team ) : ?>
+						<span class="si-badge si-badge--team"><?php echo esc_html( $team ); ?></span>
+					<?php endif; ?>
 					<?php if ( $is_active ) : ?>
 						<span class="si-badge si-badge--active"><?php esc_html_e( 'Active now', 'student-impact' ); ?></span>
 					<?php endif; ?>
@@ -398,7 +440,7 @@ class SI_Render {
 		$url = esc_url( admin_url( 'admin.php?page=student-impact' ) );
 		return '<div class="si si--empty"><p>'
 			. esc_html__( 'No student stories yet.', 'student-impact' ) . ' '
-			. '<a href="' . $url . '">' . esc_html__( 'Run a sync from the Student Stories dashboard menu.', 'student-impact' ) . '</a>'
+			. '<a href="' . $url . '">' . esc_html__( 'Run a sync from the Student Impact screen.', 'student-impact' ) . '</a>'
 			. '</p></div>';
 	}
 

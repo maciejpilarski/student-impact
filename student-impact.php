@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name:       Student Impact
- * Plugin URI:        https://wpeducationalinitiatives.wpcomstaging.com/
- * Description:       Showcases the top graduating students of the Educational Initiatives program, ranked by their WordPress.org contribution impact, contributions, and logged hours. Data is synced live from Airtable and profiles.wordpress.org. Provides "Student Stories" (showcase) and "Graduate Stats" (class-wide totals) blocks with matching shortcodes.
- * Version:           1.6.1
+ * Plugin URI:        https://wordpresseducation.org/
+ * Description:       Showcases the graduates of the WordPress Credits program, ranked by their recent impact and contributions on WordPress.org. Data is synced from Airtable and profiles.wordpress.org; program figures come from WPCredits-Tracker when it runs on the same site. Provides "Student Stories" (showcase) and "Graduate Stats" (totals) blocks with matching shortcodes.
+ * Version:           1.7.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Maciej (Matt) Pilarski
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SI_VERSION', '1.6.1' );
+define( 'SI_VERSION', '1.7.0' );
 define( 'SI_FILE', __FILE__ );
 define( 'SI_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SI_URL', plugin_dir_url( __FILE__ ) );
@@ -34,6 +34,7 @@ define( 'SI_OPT_LASTERR', 'si_last_error' ); // Last sync error message.
 define( 'SI_CRON_DAILY', 'si_cron_daily' );  // Recurring scheduled sync.
 define( 'SI_CRON_RUN', 'si_run_sync' );      // Single-event sync step (resumable).
 
+require_once SI_DIR . 'includes/shared.php';
 require_once SI_DIR . 'includes/class-si-sync.php';
 require_once SI_DIR . 'includes/class-si-render.php';
 require_once SI_DIR . 'includes/class-si-settings.php';

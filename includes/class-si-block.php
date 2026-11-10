@@ -60,8 +60,8 @@ class SI_Block {
 			array(
 				'count'       => 0,
 				'columns'     => 3,
-				'title'       => __( 'Student Stories', 'student-impact' ),
-				'subtitle'    => __( 'Our top graduating contributors, ranked by real WordPress.org impact.', 'student-impact' ),
+				'title'       => __( 'Student impact', 'student-impact' ),
+				'subtitle'    => __( 'Graduates of the program, ranked by their recent impact and contributions on WordPress.org.', 'student-impact' ),
 				'showFilters' => true,
 			)
 		);
@@ -90,8 +90,8 @@ class SI_Block {
 		$attributes = wp_parse_args(
 			is_array( $attributes ) ? $attributes : array(),
 			array(
-				'title'    => __( 'Class Impact', 'student-impact' ),
-				'subtitle' => __( 'What our graduates have contributed to WordPress.', 'student-impact' ),
+				'title'    => __( 'Graduate impact', 'student-impact' ),
+				'subtitle' => __( 'What graduates of the program have contributed to WordPress.', 'student-impact' ),
 				'showNote' => true,
 				'layout'   => 'grid',
 			)

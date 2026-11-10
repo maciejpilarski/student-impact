@@ -1,5 +1,5 @@
 /**
- * Student Impact — contribution-area filtering.
+ * Student Impact - contribution-area filtering.
  * Vanilla JS, no dependencies. Scoped per showcase instance so multiple
  * showcases on one page filter independently.
  */

@@ -1,7 +1,7 @@
 <?php
 /**
  * Sync engine: pulls Graduate students from Airtable, resolves their WordPress.org
- * profile + logged hours, scrapes each profile's contribution impact, ranks them,
+ * profile, reads each profile's contribution impact, ranks them,
  * and stores the top-N showcase.
  *
  * The sync is resumable: each invocation works within a wall-clock budget and, if
@@ -27,13 +27,17 @@ class SI_Sync {
 	const HTTP_TIMEOUT = 8;
 
 	/**
-	 * Composite ranking weights. Impact and contributions are the dominant
-	 * criteria; hours is only a minor factor (a gentle tiebreaker), never the
-	 * top criterion. Weights should sum to 1.0.
+	 * Composite ranking weights: impact and contributions, half each. Hours are
+	 * not read, ranked or shown (they are hard to measure). Weights sum to 1.0.
 	 */
-	const RANK_W_IMPACT  = 0.45;
-	const RANK_W_CONTRIB = 0.45;
-	const RANK_W_HOURS   = 0.10;
+	const RANK_W_IMPACT  = 0.5;
+	const RANK_W_CONTRIB = 0.5;
+
+	/**
+	 * A sync whose profile reads fail more often than this share publishes nothing
+	 * and keeps the previous figures: a WordPress.org outage must not zero the page.
+	 */
+	const MAX_FAILED_SHARE = 0.2;
 
 	/**
 	 * Kick off a fresh sync (called by the "Sync now" button).
@@ -107,8 +111,9 @@ class SI_Sync {
 	 * One step of the sync state machine. Registered on both cron hooks.
 	 */
 	public static function run_step() {
-		$settings = si_get_settings();
-		if ( empty( $settings['airtable_pat'] ) ) {
+		$settings                 = si_get_settings();
+		$settings['airtable_pat'] = si_airtable_token();
+		if ( '' === $settings['airtable_pat'] ) {
 			self::fail( __( 'No Airtable Personal Access Token configured.', 'student-impact' ) );
 			return;
 		}
@@ -139,7 +144,7 @@ class SI_Sync {
 				return; // Done.
 			}
 
-			// More work remains — continue in the background.
+			// More work remains - continue in the background.
 			if ( self::is_running() ) {
 				self::schedule_next();
 			}
@@ -167,7 +172,7 @@ class SI_Sync {
 		$reports = self::airtable_all(
 			$settings,
 			$settings['reports_table'],
-			array( 'Email', 'WordPress Profile', 'Hours', 'Main Contribution Team' ),
+			array( 'Email', 'WordPress Profile', 'Main Contribution Team' ),
 			''
 		);
 
@@ -189,21 +194,16 @@ class SI_Sync {
 
 		$candidates = array();
 		$grad_count = 0;    // Every graduate, whether or not they have a WP.org profile.
-		$grad_hours = 0.0;  // Total logged hours across every graduate.
 		foreach ( $grads as $g ) {
 			$f     = $g['fields'];
 			$email = self::norm_email( isset( $f['Email'] ) ? $f['Email'] : '' );
 			$rs    = isset( $rep_by_email[ $email ] ) ? $rep_by_email[ $email ] : array();
 
-			$wp    = '';
-			$hours = 0.0;
-			$team  = '';
+			$wp   = '';
+			$team = '';
 			foreach ( $rs as $rf ) {
 				if ( empty( $wp ) && ! empty( $rf['WordPress Profile'] ) ) {
 					$wp = $rf['WordPress Profile'];
-				}
-				if ( isset( $rf['Hours'] ) && is_numeric( $rf['Hours'] ) ) {
-					$hours = max( $hours, (float) $rf['Hours'] );
 				}
 				if ( empty( $team ) && ! empty( $rf['Main Contribution Team'] ) ) {
 					$tid  = is_array( $rf['Main Contribution Team'] ) ? reset( $rf['Main Contribution Team'] ) : $rf['Main Contribution Team'];
@@ -212,17 +212,15 @@ class SI_Sync {
 			}
 
 			$grad_count++;
-			$grad_hours += $hours;
 
 			$username = self::extract_username( $wp );
 			if ( ! $username ) {
-				continue; // No usable WordPress.org profile — skip from the showcase/scrape.
+				continue; // No usable WordPress.org profile - skip from the showcase/scrape.
 			}
 
 			$candidates[] = array(
 				'name'     => isset( $f['Full Name'] ) ? trim( $f['Full Name'] ) : $username,
 				'username' => $username,
-				'hours'    => (int) round( $hours ),
 				'team'     => $team,
 			);
 		}
@@ -230,7 +228,7 @@ class SI_Sync {
 		$state['candidates'] = $candidates;
 		$state['teams']      = $teams;
 		$state['grad_count'] = $grad_count;
-		$state['grad_hours'] = (int) round( $grad_hours );
+		$state['failed']     = 0;
 		$state['cursor']     = 0;
 		$state['results']    = array();
 		$state['phase']      = $candidates ? 'scrape' : 'rank';
@@ -251,6 +249,10 @@ class SI_Sync {
 		while ( $state['cursor'] < $total && time() < $deadline && $processed < self::BATCH_CAP ) {
 			$cand = $state['candidates'][ $state['cursor'] ];
 			$metrics = self::scrape_profile( $cand['username'] );
+			if ( empty( $metrics['ok'] ) ) {
+				$state['failed'] = ( isset( $state['failed'] ) ? (int) $state['failed'] : 0 ) + 1;
+			}
+			unset( $metrics['ok'] );
 			$state['results'][] = array_merge( $cand, $metrics );
 			$state['cursor']++;
 			$processed++;
@@ -271,31 +273,44 @@ class SI_Sync {
 	private static function phase_rank( $settings, $state ) {
 		$rows = $state['results'];
 
+		$failed = isset( $state['failed'] ) ? (int) $state['failed'] : 0;
+		if ( $rows && $failed / count( $rows ) > self::MAX_FAILED_SHARE ) {
+			self::fail(
+				sprintf(
+					/* translators: 1: profiles that could not be read, 2: profiles in all. */
+					__( 'WordPress.org did not answer for %1$d of %2$d profiles, so the previous figures were kept.', 'student-impact' ),
+					$failed,
+					count( $rows )
+				)
+			);
+			return;
+		}
+
 		$max_s = 0;
 		$max_c = 0;
-		$max_h = 0;
 		foreach ( $rows as $r ) {
 			$max_s = max( $max_s, $r['score'] );
 			$max_c = max( $max_c, $r['contributions'] );
-			$max_h = max( $max_h, $r['hours'] );
+		}
+		if ( $rows && 0 === $max_s && 0 === $max_c ) {
+			self::fail( __( 'No profile showed a Recent impact panel, so the previous figures were kept. WordPress.org may have changed its profile page.', 'student-impact' ) );
+			return;
 		}
 		$max_s = $max_s ?: 1;
 		$max_c = $max_c ?: 1;
-		$max_h = $max_h ?: 1;
 
 		foreach ( $rows as &$r ) {
 			$r['composite'] = round(
 				100 * (
 					self::RANK_W_IMPACT * ( $r['score'] / $max_s )
 					+ self::RANK_W_CONTRIB * ( $r['contributions'] / $max_c )
-					+ self::RANK_W_HOURS * ( $r['hours'] / $max_h )
 				),
 				1
 			);
 		}
 		unset( $r );
 
-		// Sort by composite, then impact, then contributions — hours never leads.
+		// Sort by composite, then impact, then contributions.
 		usort(
 			$rows,
 			static function ( $a, $b ) {
@@ -326,7 +341,6 @@ class SI_Sync {
 				'contributions' => $r['contributions'],
 				'high'          => $r['high'],
 				'recent90'      => $r['recent90'],
-				'hours'         => $r['hours'],
 				'composite'     => $r['composite'],
 			);
 		}
@@ -351,7 +365,6 @@ class SI_Sync {
 			array(
 				'students'      => isset( $state['grad_count'] ) ? (int) $state['grad_count'] : count( $rows ),
 				'profiles'      => count( $rows ),
-				'hours'         => isset( $state['grad_hours'] ) ? (int) $state['grad_hours'] : 0,
 				'contributions' => $sum_contrib,
 				'impact'        => $sum_impact,
 				'high'          => $sum_high,
@@ -374,6 +387,7 @@ class SI_Sync {
 	 */
 	private static function scrape_profile( $username ) {
 		$out = array(
+			'ok'            => false,
 			'score'         => 0,
 			'contributions' => 0,
 			'high'          => 0,
@@ -391,7 +405,8 @@ class SI_Sync {
 		if ( is_wp_error( $resp ) || 200 !== (int) wp_remote_retrieve_response_code( $resp ) ) {
 			return $out;
 		}
-		$html = wp_remote_retrieve_body( $resp );
+		$html      = wp_remote_retrieve_body( $resp );
+		$out['ok'] = true;
 
 		// Avatar (gravatar hash).
 		if ( preg_match( '#gravatar\.com/avatar/([a-f0-9]+)#', $html, $m ) ) {
@@ -400,7 +415,7 @@ class SI_Sync {
 
 		// Flatten to text for label-based parsing. Tags are replaced with a SPACE
 		// (not stripped) because the impact panel packs the number and its label
-		// into adjacent tags with no whitespace between them —
+		// into adjacent tags with no whitespace between them -
 		// e.g. `<span class="n">77</span><span class="u">contributions</span>`.
 		// wp_strip_all_tags() would glue those into "77contributions" and the
 		// whitespace-based regex below would never match (all metrics read as 0).

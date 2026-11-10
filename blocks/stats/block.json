@@ -5,8 +5,8 @@
 	"title": "Graduate Stats",
 	"category": "widgets",
 	"icon": "chart-bar",
-	"description": "Class-wide totals across all graduates: summed impact, contributions, and hours.",
-	"keywords": [ "students", "stats", "totals", "graduates", "impact", "hours" ],
+	"description": "Totals across all graduates: contributions, impact and the program's own figures.",
+	"keywords": [ "students", "stats", "totals", "graduates", "impact" ],
 	"textdomain": "student-impact",
 	"supports": {
 		"html": false,
@@ -19,11 +19,11 @@
 	"attributes": {
 		"title": {
 			"type": "string",
-			"default": "Class Impact"
+			"default": "Graduate impact"
 		},
 		"subtitle": {
 			"type": "string",
-			"default": "What our graduates have contributed to WordPress."
+			"default": "What graduates of the program have contributed to WordPress."
 		},
 		"showNote": {
 			"type": "boolean",
