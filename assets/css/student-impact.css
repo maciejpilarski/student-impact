@@ -63,8 +63,9 @@
 	--si-line-card: #e4e4e4;
 	--si-success-tint: #ebffed;
 	--si-success-border: #8ac894;
-	--si-radius-card: 8px;
-	--si-shadow-card: 0 1px 3px rgba( 0, 0, 0, .06 );
+	/* The theme's own cards (its `is-style-card`): a 2px corner on a hairline, no shadow. */
+	--si-radius-card: 2px;
+	--si-shadow-card: none;
 	--si-sans: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 	--si-serif: "EB Garamond", Georgia, "Times New Roman", serif;
 	--si-cols: 3;
@@ -178,7 +179,7 @@
 	padding: 0;
 }
 
-/* Card: white on a hairline, flat but for the one soft shadow. */
+/* Card: white on a hairline, flat, with the theme's 2px corner. */
 .si .si-card {
 	background: var( --si-surface );
 	border: 1px solid var( --si-line-card );
@@ -486,7 +487,7 @@
 /* Empty state (Administrators only) */
 .si--empty {
 	border: 1px solid var( --si-line );
-	border-radius: 4px;
+	border-radius: 2px;
 	color: var( --si-ink-secondary );
 	font-size: 14px;
 	padding: 16px;

@@ -3,7 +3,7 @@
  * Plugin Name:       Student Impact
  * Plugin URI:        https://wordpresseducation.org/
  * Description:       Showcases the graduates of the WordPress Credits program, ranked by their recent impact and contributions on WordPress.org. Data is synced from Airtable and profiles.wordpress.org; program figures come from WPCredits-Tracker when it runs on the same site. Provides "Student Stories" (showcase) and "Graduate Stats" (totals) blocks with matching shortcodes.
- * Version:           1.7.4
+ * Version:           1.7.5
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Maciej (Matt) Pilarski
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SI_VERSION', '1.7.4' );
+define( 'SI_VERSION', '1.7.5' );
 define( 'SI_FILE', __FILE__ );
 define( 'SI_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SI_URL', plugin_dir_url( __FILE__ ) );

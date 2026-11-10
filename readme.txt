@@ -4,7 +4,7 @@ Tags: education, students, showcase, airtable, wordpress-org
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.4
+Stable tag: 1.7.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,10 @@ Card labels:
 * Team chip: the student's main contribution area (also the filter groups).
 
 == Changelog ==
+
+= 1.7.5 =
+* Cards and tiles take the theme's own card shape: a 2px corner on a hairline,
+  no shadow.
 
 = 1.7.4 =
 * The background sync runs weekly (Mondays 06:30 UTC, half an hour after
