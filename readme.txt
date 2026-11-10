@@ -4,7 +4,7 @@ Tags: education, students, showcase, airtable, wordpress-org
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,7 +61,7 @@ Go to the **Student Impact** menu in the WP-Admin sidebar:
   Access Token** scoped to read-only access to just this base.
 * Confirm the Base ID, table ids and the status value ("Graduate").
 * Set how many students to showcase (default 50).
-* Click **Sync now**. A daily background sync also runs.
+* Click **Sync now**. A weekly background sync also runs, on Mondays at 06:30 UTC.
 
 On activation the plugin seeds anonymous totals only. The showcase names people,
 so it ships no snapshot and stays empty until the first sync.
@@ -85,6 +85,11 @@ Card labels:
 * Team chip: the student's main contribution area (also the filter groups).
 
 == Changelog ==
+
+= 1.7.4 =
+* The background sync runs weekly (Mondays 06:30 UTC, half an hour after
+  WPCredits-Tracker's) instead of daily. A site on the daily schedule moves over
+  by itself.
 
 = 1.7.3 =
 * The plugin no longer ships a snapshot of named graduates (`data/seed.json`):

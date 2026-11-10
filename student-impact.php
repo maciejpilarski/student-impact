@@ -3,7 +3,7 @@
  * Plugin Name:       Student Impact
  * Plugin URI:        https://wordpresseducation.org/
  * Description:       Showcases the graduates of the WordPress Credits program, ranked by their recent impact and contributions on WordPress.org. Data is synced from Airtable and profiles.wordpress.org; program figures come from WPCredits-Tracker when it runs on the same site. Provides "Student Stories" (showcase) and "Graduate Stats" (totals) blocks with matching shortcodes.
- * Version:           1.7.3
+ * Version:           1.7.4
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Maciej (Matt) Pilarski
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SI_VERSION', '1.7.3' );
+define( 'SI_VERSION', '1.7.4' );
 define( 'SI_FILE', __FILE__ );
 define( 'SI_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SI_URL', plugin_dir_url( __FILE__ ) );
@@ -31,7 +31,7 @@ define( 'SI_OPT_TOTALS', 'si_totals' );      // Aggregate stats across ALL gradu
 define( 'SI_OPT_STATE', 'si_state' );        // Resumable sync state.
 define( 'SI_OPT_LASTSYNC', 'si_last_sync' ); // Timestamp of last successful sync.
 define( 'SI_OPT_LASTERR', 'si_last_error' ); // Last sync error message.
-define( 'SI_CRON_DAILY', 'si_cron_daily' );  // Recurring scheduled sync.
+define( 'SI_CRON_SYNC', 'si_cron_daily' );   // Recurring scheduled sync, weekly since 1.7.4 (the hook keeps its first name).
 define( 'SI_CRON_RUN', 'si_run_sync' );      // Single-event sync step (resumable).
 
 require_once SI_DIR . 'includes/shared.php';
@@ -75,7 +75,12 @@ function si_init() {
 	SI_Block::instance();
 
 	// Cron handlers.
-	add_action( SI_CRON_DAILY, array( 'SI_Sync', 'run_step' ) );
+	add_action( SI_CRON_SYNC, array( 'SI_Sync', 'run_step' ) );
+
+	// A site that scheduled the sync daily (before 1.7.4) moves to the weekly slot.
+	if ( 'weekly' !== wp_get_schedule( SI_CRON_SYNC ) ) {
+		si_schedule_sync();
+	}
 	add_action( SI_CRON_RUN, array( 'SI_Sync', 'run_step' ) );
 
 	// Shortcodes.
@@ -127,7 +132,31 @@ function si_register_styles() {
 }
 
 /**
- * Activation: seed the anonymous totals and schedule the daily sync.
+ * The next Monday 06:30 UTC as a Unix timestamp: half an hour after WPCredits-Tracker's weekly
+ * sync, so a page of both plugins takes its new figures the same morning.
+ *
+ * @param int|null $now Current time (for tests); defaults to time().
+ * @return int
+ */
+function si_next_monday_0630_utc( $now = null ) {
+	$now  = null === $now ? time() : (int) $now;
+	$next = strtotime( 'monday 06:30 UTC', $now );
+	if ( false === $next || $next <= $now ) {
+		$next = strtotime( 'next monday 06:30 UTC', $now );
+	}
+	return (int) $next;
+}
+
+/**
+ * Schedule the weekly sync, replacing any other schedule of the same hook.
+ */
+function si_schedule_sync() {
+	wp_clear_scheduled_hook( SI_CRON_SYNC );
+	wp_schedule_event( si_next_monday_0630_utc(), 'weekly', SI_CRON_SYNC );
+}
+
+/**
+ * Activation: seed the anonymous totals and schedule the weekly sync.
  */
 function si_activate() {
 	// Ensure default settings exist.
@@ -150,10 +179,7 @@ function si_activate() {
 		}
 	}
 
-	// Schedule the recurring sync (daily).
-	if ( ! wp_next_scheduled( SI_CRON_DAILY ) ) {
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', SI_CRON_DAILY );
-	}
+	si_schedule_sync();
 }
 register_activation_hook( __FILE__, 'si_activate' );
 
@@ -161,7 +187,7 @@ register_activation_hook( __FILE__, 'si_activate' );
  * Deactivation: clear scheduled events.
  */
 function si_deactivate() {
-	wp_clear_scheduled_hook( SI_CRON_DAILY );
+	wp_clear_scheduled_hook( SI_CRON_SYNC );
 	wp_clear_scheduled_hook( SI_CRON_RUN );
 }
 register_deactivation_hook( __FILE__, 'si_deactivate' );

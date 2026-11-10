@@ -120,7 +120,7 @@ class SI_Sync {
 
 		$state = get_option( SI_OPT_STATE, array() );
 		if ( ! is_array( $state ) || empty( $state['phase'] ) || in_array( $state['phase'], array( 'done', 'error' ), true ) ) {
-			// A scheduled (daily) run with no active state: start one.
+			// A scheduled (weekly) run with no active state: start one.
 			self::start();
 			$state = get_option( SI_OPT_STATE, array() );
 		}
