@@ -63,6 +63,13 @@
 						onChange: function ( v ) {
 							setAttributes( { showFilters: v } );
 						},
+					} ),
+					el( ToggleControl, {
+						label: __( 'Show the legend', 'student-impact' ),
+						checked: !! attributes.showLegend,
+						onChange: function ( v ) {
+							setAttributes( { showLegend: v } );
+						},
 					} )
 				)
 			);

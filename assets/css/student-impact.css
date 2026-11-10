@@ -376,6 +376,59 @@
 	border-color: var( --si-line );
 }
 
+/* The legend under the cards: each term drawn as a card draws it, then what it means. */
+.si .si-legend {
+	border-top: 1px solid var( --si-line );
+	margin: 32px 0 0;
+	padding: 32px 0 0;
+}
+
+.si .si-legend__title {
+	color: var( --si-ink );
+	font-family: var( --si-serif );
+	font-size: 26px;
+	font-weight: 400;
+	letter-spacing: -.01em;
+	line-height: 1.15;
+	margin: 0 0 16px;
+}
+
+.si .si-legend__list {
+	display: grid;
+	gap: 16px 32px;
+	grid-template-columns: repeat( auto-fill, minmax( min( 100%, 320px ), 1fr ) );
+	margin: 0;
+	padding: 0;
+}
+
+.si .si-legend__item {
+	margin: 0;
+}
+
+.si .si-legend__item dt {
+	font-weight: 400;
+	line-height: 1.5;
+	margin: 0 0 4px;
+}
+
+.si .si-legend__item dd {
+	color: var( --si-ink-secondary );
+	font-size: 14px;
+	line-height: 1.5;
+	margin: 0;
+}
+
+.si-legend__figure,
+.si-legend__rank {
+	color: var( --si-ink );
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.si-legend__item .si-badge {
+	display: inline-block;
+}
+
 /* Empty state (Administrators only) */
 .si--empty {
 	border: 1px solid var( --si-line );

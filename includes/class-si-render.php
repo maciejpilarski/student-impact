@@ -25,6 +25,7 @@ class SI_Render {
 				'title'    => __( 'Student impact', 'student-impact' ),
 				'subtitle' => __( 'Graduates of the program, ranked by their recent impact and contributions on WordPress.org.', 'student-impact' ),
 				'filters'  => 'yes',
+				'legend'   => 'yes',
 			),
 			$atts,
 			'student_impact'
@@ -37,6 +38,7 @@ class SI_Render {
 				'title'    => (string) $atts['title'],
 				'subtitle' => (string) $atts['subtitle'],
 				'filters'  => self::truthy( $atts['filters'] ),
+				'legend'   => self::truthy( $atts['legend'] ),
 			)
 		);
 	}
@@ -240,6 +242,7 @@ class SI_Render {
 				'title'    => __( 'Student impact', 'student-impact' ),
 				'subtitle' => '',
 				'filters'  => true,
+				'legend'   => true,
 			)
 		);
 
@@ -305,9 +308,58 @@ class SI_Render {
 			<?php if ( $show_filters ) : ?>
 				<p class="si__empty-filter" hidden><?php esc_html_e( 'No students in this area.', 'student-impact' ); ?></p>
 			<?php endif; ?>
+
+			<?php
+			if ( ! empty( $args['legend'] ) ) {
+				echo self::legend(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+			?>
 		</section>
 		<?php
 		return trim( ob_get_clean() );
+	}
+
+	/**
+	 * The legend under the showcase: what each figure and chip on a card means.
+	 *
+	 * Each term is drawn as it is on a card, so a reader matches it by sight.
+	 *
+	 * @return string HTML.
+	 */
+	private static function legend() {
+		$items = array(
+			array(
+				'term' => '<span class="si-legend__figure">' . esc_html__( 'Impact', 'student-impact' ) . '</span>',
+				'text' => __( 'The recent impact score on the graduate\'s WordPress.org profile, for the last 12 months. WordPress.org weighs each contribution: high-impact work counts three times as much as routine activity.', 'student-impact' ),
+			),
+			array(
+				'term' => '<span class="si-legend__figure">' . esc_html__( 'Contributions', 'student-impact' ) . '</span>',
+				'text' => __( 'How many contributions WordPress.org recorded for the graduate in the last 12 months, of any kind.', 'student-impact' ),
+			),
+			array(
+				/* translators: %s: number of high-impact contributions. */
+				'term' => '<span class="si-badge si-badge--high">' . esc_html( sprintf( _n( '%s high-impact', '%s high-impact', 8, 'student-impact' ), number_format_i18n( 8 ) ) ) . '</span>',
+				'text' => __( 'How many of those contributions WordPress.org counts as high-impact, such as commits, releases, approved translations and props.', 'student-impact' ),
+			),
+			array(
+				'term' => '<span class="si-badge si-badge--active">' . esc_html__( 'Active now', 'student-impact' ) . '</span>',
+				'text' => __( 'The graduate made at least one contribution in the last 90 days.', 'student-impact' ),
+			),
+			array(
+				'term' => '<span class="si-badge si-badge--team">' . esc_html__( 'Polyglots', 'student-impact' ) . '</span>',
+				'text' => __( 'The WordPress team the graduate mainly contributes to, Polyglots for example. The buttons above the cards filter by it.', 'student-impact' ),
+			),
+			array(
+				'term' => '<span class="si-legend__rank">#1</span>',
+				'text' => __( 'The graduate\'s place in the list. Impact and contributions count half each; the first three sit on a tinted card.', 'student-impact' ),
+			),
+		);
+
+		$html = '<div class="si-legend"><h3 class="si-legend__title">' . esc_html__( 'What the figures mean', 'student-impact' ) . '</h3><dl class="si-legend__list">';
+		foreach ( $items as $item ) {
+			$html .= '<div class="si-legend__item"><dt>' . $item['term'] . '</dt><dd>' . esc_html( $item['text'] ) . '</dd></div>';
+		}
+		return $html . '</dl></div>';
 	}
 
 	/**

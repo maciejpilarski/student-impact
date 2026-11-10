@@ -36,6 +36,10 @@
 		"showFilters": {
 			"type": "boolean",
 			"default": true
+		},
+		"showLegend": {
+			"type": "boolean",
+			"default": true
 		}
 	},
 	"editorScript": "file:./editor.js",

@@ -63,6 +63,7 @@ class SI_Block {
 				'title'       => __( 'Student impact', 'student-impact' ),
 				'subtitle'    => __( 'Graduates of the program, ranked by their recent impact and contributions on WordPress.org.', 'student-impact' ),
 				'showFilters' => true,
+				'showLegend'  => true,
 			)
 		);
 
@@ -73,6 +74,7 @@ class SI_Block {
 				'title'    => (string) $attributes['title'],
 				'subtitle' => (string) $attributes['subtitle'],
 				'filters'  => ! empty( $attributes['showFilters'] ),
+				'legend'   => ! empty( $attributes['showLegend'] ),
 			)
 		);
 
